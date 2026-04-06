@@ -1,22 +1,18 @@
-import time
-import random
-from gensim.models import Word2Vec
-from sklearn.decomposition import PCA
-import matplotlib.pyplot as plt
 import streamlit as st
 import streamlit.components.v1 as components
 import pandas as pd
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+from sentence_transformers import SentenceTransformer
 import nltk
 import re
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 from collections import Counter
-from sentence_transformers import SentenceTransformer
-from sklearn.metrics.pairwise import cosine_similarity
 
 nltk.download('stopwords')
 nltk.download('wordnet')
+nltk.download('omw-1.4')
 
 st.title("Text Preprocessing → Embeddings Visualizer")
 
@@ -92,9 +88,6 @@ def vectorize(text, method="Bag of Words"):
     X = vec.fit_transform([text])
     return vec.get_feature_names_out(), X.toarray()
 
-def train_word2vec(tokens):
-    model = Word2Vec([tokens], vector_size=50, window=2, min_count=1)
-    return model
 
 
 if text:
@@ -138,19 +131,27 @@ if text:
     vec_df = pd.DataFrame(vectors, columns=words)
     st.dataframe(vec_df)
 
-    st.subheader("Word Embeddings (Word2Vec)")
+    st.subheader("Word Embeddings (Transformer Embeddings)")
 
-    model = train_word2vec(normalized_tokens)
+    model = SentenceTransformer('all-MiniLM-L6-v2')
 
-    words = list(model.wv.index_to_key)
-    vectors = model.wv[words]
+    if normalized_tokens:
+        embeddings = model.encode(normalized_tokens)
 
-    pca = PCA(n_components=2)
-    coords = pca.fit_transform(vectors)
+        emb_df = pd.DataFrame(embeddings)
+        emb_df.index = normalized_tokens
 
-    fig = plt.figure()
-    for i, word in enumerate(words):
-        plt.scatter(coords[i, 0], coords[i, 1])
-        plt.text(coords[i, 0], coords[i, 1], word)
+        st.write("Each word is converted into a dense vector:")
+        st.dataframe(emb_df)
 
-    st.pyplot(fig)
+        st.write("Vector size:", embeddings.shape[1])
+
+    st.subheader("Word Similarity")
+
+    word1 = st.text_input("Word 1")
+    word2 = st.text_input("Word 2")
+
+    if word1 in normalized_tokens and word2 in normalized_tokens:
+        emb = model.encode([word1, word2])
+        sim = cosine_similarity([emb[0]], [emb[1]])[0][0]
+        st.write("Similarity Score:", sim)
