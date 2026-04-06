@@ -131,27 +131,28 @@ if text:
     vec_df = pd.DataFrame(vectors, columns=words)
     st.dataframe(vec_df)
 
-    st.subheader("Word Embeddings (Transformer Embeddings)")
-
-    model = SentenceTransformer('all-MiniLM-L6-v2')
-
-    if normalized_tokens:
-        embeddings = model.encode(normalized_tokens)
-
-        emb_df = pd.DataFrame(embeddings)
-        emb_df.index = normalized_tokens
-
-        st.write("Each word is converted into a dense vector:")
-        st.dataframe(emb_df)
-
-        st.write("Vector size:", embeddings.shape[1])
 
     st.subheader("Word Similarity")
+    
+    @st.cache_resource
+    def load_model():
+        return SentenceTransformer('all-MiniLM-L6-v2')
+    
+    model = load_model()
 
-    word1 = st.text_input("Word 1")
-    word2 = st.text_input("Word 2")
+    input1 = st.text_input("Word 1")
+    input2 = st.text_input("Word 2")
 
-    if word1 in normalized_tokens and word2 in normalized_tokens:
-        emb = model.encode([word1, word2])
-        sim = cosine_similarity([emb[0]], [emb[1]])[0][0]
-        st.write("Similarity Score:", sim)
+    word1 = input1.strip().lower()
+    word2 = input2.strip().lower()
+
+    if word1 and word2:
+        if word1 in normalized_tokens and word2 in normalized_tokens:
+            emb = model.encode([word1, word2])
+            sim = cosine_similarity(emb[0:1], emb[1:2])[0][0]
+            st.metric("Similarity Score", f"{sim:.4f}")
+        else:
+            missing = []
+            if word1 not in normalized_tokens: missing.append(f"'{input1}'")
+            if word2 not in normalized_tokens: missing.append(f"'{input2}'")
+            st.warning(f"Word(s) {', '.join(missing)} not found in the current text tokens. Please use words that appear in the 'Normalization' section above.")
