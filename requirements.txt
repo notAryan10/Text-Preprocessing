@@ -1,0 +1,7 @@
+streamlit
+nltk
+scikit-learn
+gensim
+sentence-transformers
+matplotlib
+pandas
