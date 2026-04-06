@@ -154,17 +154,3 @@ if text:
         plt.text(coords[i, 0], coords[i, 1], word)
 
     st.pyplot(fig)
-
-    model_bert = SentenceTransformer('all-MiniLM-L6-v2')
-
-    st.subheader("Contextual Embeddings")
-
-    sentence1 = st.text_input("Sentence 1", "I went to the bank to deposit money")
-    sentence2 = st.text_input("Sentence 2", "I sat near the river bank")
-
-    if sentence1 and sentence2:
-        emb1 = model_bert.encode(sentence1)
-        emb2 = model_bert.encode(sentence2)
-
-        similarity = cosine_similarity([emb1], [emb2])[0][0]
-        st.write("Cosine Similarity:", similarity)
