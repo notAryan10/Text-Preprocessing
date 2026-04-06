@@ -136,7 +136,7 @@ if text:
     
     @st.cache_resource
     def load_model():
-        return SentenceTransformer('all-MiniLM-L6-v2')
+        return SentenceTransformer('all-MiniLM-L6-v2', device='cpu')
     
     model = load_model()
 
